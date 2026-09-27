@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AlgoVerse — learn algorithms through motion</title>
+  <meta name="description" content="Interactive sorting, searching, and pathfinding visualizer. Run it in the browser — no install." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="nav">
+    <button class="logo" id="homeBtn" type="button">ALGO VERSE</button>
+    <button class="nav-btn cyan" id="homeNav" type="button">[ HOME ]</button>
+    <span class="spacer"></span>
+    <button class="nav-btn purple" id="infoBtn" type="button">[ INFO ]</button>
+  </header>
+
+  <main id="view"></main>
+
+  <aside id="infoPanel" class="info-panel" hidden>
+    <div class="info-head">
+      <span>[ ALGORITHM INFO ]</span>
+      <button type="button" id="infoClose" class="close">✕</button>
+    </div>
+    <div id="infoBody" class="info-body"></div>
+  </aside>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
