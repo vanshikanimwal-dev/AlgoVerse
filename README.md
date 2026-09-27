@@ -1,73 +1,75 @@
 # AlgoVerse
 
-Learn algorithms through motion. Watch **sorting**, **searching**, and **pathfinding** animate — comparisons, swaps, visits, and the shortest path — in the browser or as a JavaFX desktop app.
+**[▶ Open in your browser](https://vanshikanimwal-dev.github.io/AlgoVerse/)** — no Java, no install.
 
-## Use it now (no install)
+Learn algorithms through motion. AlgoVerse animates **sorting**, **searching**, and **pathfinding** so you can see comparisons, swaps, visits, and the shortest path as they happen.
 
-**[Open the live visualizer →](https://vanshikanimwal-dev.github.io/AlgoVerse/)**
+| | |
+| --- | --- |
+| Live demo | https://vanshikanimwal-dev.github.io/AlgoVerse/ |
+| Source | https://github.com/vanshikanimwal-dev/AlgoVerse |
 
-Works in any modern browser. Home → Sorting, Searching, or Pathfinding. Press Play.
+## Try it
 
-Direct links:
+Works in Chrome, Edge, Firefox, and Safari.
 
-- [Sorting](https://vanshikanimwal-dev.github.io/AlgoVerse/#sort)
-- [Searching](https://vanshikanimwal-dev.github.io/AlgoVerse/#search)
-- [Pathfinding](https://vanshikanimwal-dev.github.io/AlgoVerse/#path)
+- [Home](https://vanshikanimwal-dev.github.io/AlgoVerse/)
+- [Sorting visualizer](https://vanshikanimwal-dev.github.io/AlgoVerse/#sort)
+- [Searching visualizer](https://vanshikanimwal-dev.github.io/AlgoVerse/#search)
+- [Pathfinding visualizer](https://vanshikanimwal-dev.github.io/AlgoVerse/#path)
 
-## Features
+Click a mode, pick an algorithm, press **Play**. Use **[ INFO ]** for complexity and a short explanation. The gold line in the pseudocode follows the current step.
 
-- Play, pause, step forward/back, shuffle, and speed control
-- Live **pseudocode** with the current line highlighted
-- Slide-out **INFO** panel: complexity, what it does, and when to use it
-- Step log plus running stats
-- Pathfinding: draw walls, drag start/end, generate a maze, optional terrain weights
+## What is included
 
-### Sorting
+- Play / pause / step forward / step back / speed
+- Shuffle, array size, pathfinding maze and walls
+- Highlighted pseudocode
+- Step log and stats (comparisons, moves, visited cells, path length)
 
-Bubble, Selection, Insertion, Shell, Merge, Quick, Heap, Cocktail Shaker, Counting, Radix, Gnome, Odd-Even
+**Sorting:** Bubble, Selection, Insertion, Shell, Merge, Quick, Heap, Cocktail Shaker, Counting, Radix, Gnome, Odd-Even
 
-### Searching
+**Searching:** Linear, Binary, Jump
 
-Linear, Binary, Jump
-
-### Pathfinding
-
-BFS, DFS, Dijkstra, A\*, Greedy Best-First
+**Pathfinding:** BFS, DFS, Dijkstra, A\*, Greedy Best-First
 
 - Left-drag paints walls; right-drag erases
-- Drag the cyan **start** and red **end**
-- **Weights** assigns move costs 1–5. Dijkstra and A\* use cost; BFS still treats every step as 1
+- Drag cyan **start** and red **end**
+- **Weights** (1–5): Dijkstra and A\* use cost; BFS treats every step as 1
 
-## Run the desktop app (JavaFX)
+## Run the desktop app (optional)
 
-Needs **JDK 21**. `JAVA_HOME` must be the JDK **folder**, not `java.exe`.
+The same visualizers also exist as a JavaFX app if you want them on your machine.
+
+You need **JDK 21**. `JAVA_HOME` must be the JDK **folder**, not `java.exe`.
+
+**Windows**
 
 ```powershell
+git clone https://github.com/vanshikanimwal-dev/AlgoVerse.git
+cd AlgoVerse
 $env:JAVA_HOME = "C:\Program Files\Java\jdk-21.0.12"
 .\mvnw.cmd javafx:run
 ```
 
-On Windows you can also double-click `run.cmd` (edit the JDK path inside it if needed).
+Or double-click `run.cmd` (edit the JDK path in that file if yours is different).
 
-macOS / Linux:
+**macOS / Linux**
 
 ```bash
+git clone https://github.com/vanshikanimwal-dev/AlgoVerse.git
+cd AlgoVerse
 export JAVA_HOME=$(/usr/libexec/java_home -v 21)
 ./mvnw javafx:run
 ```
 
-## Project layout
+## Repo layout
 
 ```
-docs/                         # GitHub Pages web app
-src/main/java/.../            # JavaFX desktop app
-  AlgoVerseApp.java
-  SortingVisualizer.java
-  SearchingVisualizer.java
-  PathfindingVisualizer.java
+docs/           GitHub Pages site (the live demo)
+src/main/java   JavaFX desktop app
 ```
 
-## Tech
+## License
 
-Web: HTML, CSS, Canvas  
-Desktop: Java 21, JavaFX 21, Maven
+Use and share freely for learning.
