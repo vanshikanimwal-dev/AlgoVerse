@@ -1,7 +1,6 @@
 package com.algoverse.algoverse;
 
 import javafx.animation.AnimationTimer;
-import javafx.geometry.Insets;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.*;
@@ -11,6 +10,7 @@ import javafx.scene.text.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class SortingVisualizer extends VBox {
 
@@ -26,8 +26,14 @@ public class SortingVisualizer extends VBox {
 
     // Algorithm steps
     private List<int[][]> steps     = new ArrayList<>();
+    private final List<int[]> statsAtStep = new ArrayList<>();
     private int currentStep         = 0;
     private boolean isPlaying       = false;
+    private final Consumer<String> onAlgorithmSelected;
+    private ComboBox<String> algoSelector;
+    private String currentAlgoName = "Bubble Sort";
+    private final List<Integer> codeLineAtStep = new ArrayList<>();
+    private PseudocodePane codePane;
 
     // Speed control
     private long lastUpdate         = 0;
@@ -49,17 +55,25 @@ public class SortingVisualizer extends VBox {
     private AnimationTimer timer;
 
     public SortingVisualizer() {
-        canvas = new Canvas(1200, 440);
+        this(null);
+    }
+
+    public SortingVisualizer(Consumer<String> onAlgorithmSelected) {
+        this.onAlgorithmSelected = onAlgorithmSelected;
+        canvas = new Canvas();
         gc     = canvas.getGraphicsContext2D();
 
         array  = generateArray(20);
         generateBubbleSortSteps();
-        drawArray();
 
-        VBox canvasBox = new VBox(canvas);
-        canvasBox.setStyle("-fx-background-color: #0A0E1A; -fx-padding: 16 16 0 16;");
+        codePane = new PseudocodePane();
+        codePane.load("Bubble Sort");
+        Pane canvasHolder = UiKit.bindCanvas(canvas, this::drawArray);
+        HBox stage = new HBox(canvasHolder, codePane);
+        stage.setStyle("-fx-background-color: #0A0E1A; -fx-padding: 16 0 0 16;");
+        HBox.setHgrow(canvasHolder, Priority.ALWAYS);
+        VBox.setVgrow(stage, Priority.ALWAYS);
 
-        // ← CHANGED: terminal created FIRST so stepLogBox exists
         VBox terminalPanel = createTerminalPanel();
 
         ScrollPane controlScroll = new ScrollPane();
@@ -76,10 +90,36 @@ public class SortingVisualizer extends VBox {
 """);
 
         // ← CHANGED: terminalPanel added at bottom
-        this.getChildren().addAll(canvasBox, controlScroll, terminalPanel);
+        this.getChildren().addAll(stage, controlScroll, terminalPanel);
         this.setStyle("-fx-background-color: #0A0E1A;");
+        VBox.setVgrow(stage, Priority.ALWAYS);
 
         setupAnimationTimer();
+        if (onAlgorithmSelected != null) onAlgorithmSelected.accept("Bubble Sort");
+    }
+
+    public void stop() {
+        isPlaying = false;
+        if (timer != null) timer.stop();
+    }
+
+    private void beginGeneration() {
+        steps.clear();
+        statsAtStep.clear();
+        codeLineAtStep.clear();
+        currentStep = 0;
+        comparisons = 0;
+        swaps = 0;
+    }
+
+    private void recordStep(int[][] frame) {
+        String event = "mark";
+        if (frame[1].length >= 1) event = "compare";
+        else if (frame[2].length >= 1) event = "swap";
+        else if (frame[3].length > 0 && array != null && frame[3].length == array.length) event = "done";
+        steps.add(frame);
+        statsAtStep.add(new int[]{comparisons, swaps});
+        codeLineAtStep.add(Pseudocode.line(currentAlgoName, event));
     }
 
     // ─── Array Generation ────────────────────────────────────────────────────
@@ -95,10 +135,7 @@ public class SortingVisualizer extends VBox {
     // ─── Bubble Sort Step Generator ──────────────────────────────────────────
 
     private void generateBubbleSortSteps() {
-        steps.clear();
-        currentStep  = 0;
-        comparisons  = 0;
-        swaps        = 0;
+        beginGeneration();
 
         int[] arr = array.clone();
         int n     = arr.length;
@@ -106,7 +143,7 @@ public class SortingVisualizer extends VBox {
         for (int i = 0; i < n - 1; i++) {
             for (int j = 0; j < n - i - 1; j++) {
                 comparisons++;
-                steps.add(new int[][]{
+                recordStep(new int[][]{
                         arr.clone(),
                         {j, j + 1},
                         {},
@@ -118,7 +155,7 @@ public class SortingVisualizer extends VBox {
                     int temp   = arr[j];
                     arr[j]     = arr[j + 1];
                     arr[j + 1] = temp;
-                    steps.add(new int[][]{
+                    recordStep(new int[][]{
                             arr.clone(),
                             {},
                             {j, j + 1},
@@ -131,7 +168,7 @@ public class SortingVisualizer extends VBox {
             for (int k = 0; k <= i; k++) {
                 sortedSoFar[k] = n - 1 - k;
             }
-            steps.add(new int[][]{
+            recordStep(new int[][]{
                     arr.clone(),
                     {},
                     {},
@@ -141,11 +178,11 @@ public class SortingVisualizer extends VBox {
 
         int[] allSorted = new int[n];
         for (int i = 0; i < n; i++) allSorted[i] = i;
-        steps.add(new int[][]{arr.clone(), {}, {}, allSorted});
+        recordStep(new int[][]{arr.clone(), {}, {}, allSorted});
     }
     // ─── Selection Sort ──────────────────────────────────────────────────────────
     private void generateSelectionSortSteps() {
-        steps.clear(); currentStep = 0; comparisons = 0; swaps = 0;
+        beginGeneration();
         int[] arr = array.clone();
         int n = arr.length;
 
@@ -153,25 +190,25 @@ public class SortingVisualizer extends VBox {
             int minIdx = i;
             for (int j = i + 1; j < n; j++) {
                 comparisons++;
-                steps.add(new int[][]{ arr.clone(), {minIdx, j}, {}, {} });
+                recordStep(new int[][]{ arr.clone(), {minIdx, j}, {}, {} });
                 if (arr[j] < arr[minIdx]) minIdx = j;
             }
             if (minIdx != i) {
                 swaps++;
                 int tmp = arr[i]; arr[i] = arr[minIdx]; arr[minIdx] = tmp;
-                steps.add(new int[][]{ arr.clone(), {}, {i, minIdx}, {} });
+                recordStep(new int[][]{ arr.clone(), {}, {i, minIdx}, {} });
             }
             int[] sf = new int[i + 1];
             for (int k = 0; k <= i; k++) sf[k] = k;
-            steps.add(new int[][]{ arr.clone(), {}, {}, sf });
+            recordStep(new int[][]{ arr.clone(), {}, {}, sf });
         }
         int[] all = new int[n]; for (int i = 0; i < n; i++) all[i] = i;
-        steps.add(new int[][]{ arr.clone(), {}, {}, all });
+        recordStep(new int[][]{ arr.clone(), {}, {}, all });
     }
 
     // ─── Insertion Sort ──────────────────────────────────────────────────────────
     private void generateInsertionSortSteps() {
-        steps.clear(); currentStep = 0; comparisons = 0; swaps = 0;
+        beginGeneration();
         int[] arr = array.clone();
         int n = arr.length;
 
@@ -179,25 +216,25 @@ public class SortingVisualizer extends VBox {
             int j = i;
             while (j > 0) {
                 comparisons++;
-                steps.add(new int[][]{ arr.clone(), {j - 1, j}, {}, {} });
+                recordStep(new int[][]{ arr.clone(), {j - 1, j}, {}, {} });
                 if (arr[j] < arr[j - 1]) {
                     swaps++;
                     int tmp = arr[j]; arr[j] = arr[j - 1]; arr[j - 1] = tmp;
-                    steps.add(new int[][]{ arr.clone(), {}, {j, j - 1}, {} });
+                    recordStep(new int[][]{ arr.clone(), {}, {j, j - 1}, {} });
                     j--;
                 } else break;
             }
             int[] sf = new int[i + 1];
             for (int k = 0; k <= i; k++) sf[k] = k;
-            steps.add(new int[][]{ arr.clone(), {}, {}, sf });
+            recordStep(new int[][]{ arr.clone(), {}, {}, sf });
         }
         int[] all = new int[n]; for (int i = 0; i < n; i++) all[i] = i;
-        steps.add(new int[][]{ arr.clone(), {}, {}, all });
+        recordStep(new int[][]{ arr.clone(), {}, {}, all });
     }
 
     // ─── Shell Sort ──────────────────────────────────────────────────────────────
     private void generateShellSortSteps() {
-        steps.clear(); currentStep = 0; comparisons = 0; swaps = 0;
+        beginGeneration();
         int[] arr = array.clone();
         int n = arr.length;
 
@@ -206,28 +243,28 @@ public class SortingVisualizer extends VBox {
                 int j = i;
                 while (j >= gap) {
                     comparisons++;
-                    steps.add(new int[][]{ arr.clone(), {j - gap, j}, {}, {} });
+                    recordStep(new int[][]{ arr.clone(), {j - gap, j}, {}, {} });
                     if (arr[j] < arr[j - gap]) {
                         swaps++;
                         int tmp = arr[j]; arr[j] = arr[j - gap]; arr[j - gap] = tmp;
-                        steps.add(new int[][]{ arr.clone(), {}, {j, j - gap}, {} });
+                        recordStep(new int[][]{ arr.clone(), {}, {j, j - gap}, {} });
                         j -= gap;
                     } else break;
                 }
             }
         }
         int[] all = new int[n]; for (int i = 0; i < n; i++) all[i] = i;
-        steps.add(new int[][]{ arr.clone(), {}, {}, all });
+        recordStep(new int[][]{ arr.clone(), {}, {}, all });
     }
 
     // ─── Merge Sort ──────────────────────────────────────────────────────────────
     private void generateMergeSortSteps() {
-        steps.clear(); currentStep = 0; comparisons = 0; swaps = 0;
+        beginGeneration();
         int[] arr = array.clone();
         mergeSort(arr, 0, arr.length - 1);
         int[] all = new int[arr.length];
         for (int i = 0; i < arr.length; i++) all[i] = i;
-        steps.add(new int[][]{ arr.clone(), {}, {}, all });
+        recordStep(new int[][]{ arr.clone(), {}, {}, all });
     }
 
     private void mergeSort(int[] arr, int l, int r) {
@@ -244,14 +281,14 @@ public class SortingVisualizer extends VBox {
         int i = 0, j = 0, k = l;
         while (i < left.length && j < right.length) {
             comparisons++;
-            steps.add(new int[][]{ arr.clone(), {l + i, mid + 1 + j}, {}, {} });
+            recordStep(new int[][]{ arr.clone(), {l + i, mid + 1 + j}, {}, {} });
             if (left[i] <= right[j]) {
                 arr[k++] = left[i++];
             } else {
                 arr[k++] = right[j++];
                 swaps++;
             }
-            steps.add(new int[][]{ arr.clone(), {}, {k - 1}, {} });
+            recordStep(new int[][]{ arr.clone(), {}, {k - 1}, {} });
         }
         while (i < left.length) { arr[k++] = left[i++]; }
         while (j < right.length) { arr[k++] = right[j++]; }
@@ -259,12 +296,12 @@ public class SortingVisualizer extends VBox {
 
     // ─── Quick Sort ──────────────────────────────────────────────────────────────
     private void generateQuickSortSteps() {
-        steps.clear(); currentStep = 0; comparisons = 0; swaps = 0;
+        beginGeneration();
         int[] arr = array.clone();
         quickSort(arr, 0, arr.length - 1);
         int[] all = new int[arr.length];
         for (int i = 0; i < arr.length; i++) all[i] = i;
-        steps.add(new int[][]{ arr.clone(), {}, {}, all });
+        recordStep(new int[][]{ arr.clone(), {}, {}, all });
     }
 
     private void quickSort(int[] arr, int low, int high) {
@@ -280,21 +317,21 @@ public class SortingVisualizer extends VBox {
         int i = low - 1;
         for (int j = low; j < high; j++) {
             comparisons++;
-            steps.add(new int[][]{ arr.clone(), {j, high}, {}, {} });
+            recordStep(new int[][]{ arr.clone(), {j, high}, {}, {} });
             if (arr[j] <= pivot) {
                 i++;
                 swaps++;
                 int tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
-                steps.add(new int[][]{ arr.clone(), {}, {i, j}, {} });
+                recordStep(new int[][]{ arr.clone(), {}, {i, j}, {} });
             }
         }
         int tmp = arr[i + 1]; arr[i + 1] = arr[high]; arr[high] = tmp;
-        steps.add(new int[][]{ arr.clone(), {}, {i + 1, high}, {} });
+        recordStep(new int[][]{ arr.clone(), {}, {i + 1, high}, {} });
         return i + 1;
     }
     // ─── Heap Sort ────────────────────────────────────────────────────────────────
     private void generateHeapSortSteps() {
-        steps.clear(); currentStep = 0; comparisons = 0; swaps = 0;
+        beginGeneration();
         int[] arr = array.clone();
         int n = arr.length;
 
@@ -307,18 +344,18 @@ public class SortingVisualizer extends VBox {
         for (int i = n - 1; i > 0; i--) {
             swaps++;
             int tmp = arr[0]; arr[0] = arr[i]; arr[i] = tmp;
-            steps.add(new int[][]{ arr.clone(), {}, {0, i}, {} });
+            recordStep(new int[][]{ arr.clone(), {}, {0, i}, {} });
 
             int[] sf = new int[n - i];
             for (int k = 0; k < n - i; k++) sf[k] = i + k;
-            steps.add(new int[][]{ arr.clone(), {}, {}, sf });
+            recordStep(new int[][]{ arr.clone(), {}, {}, sf });
 
             heapify(arr, i, 0);
         }
 
         int[] all = new int[n];
         for (int i = 0; i < n; i++) all[i] = i;
-        steps.add(new int[][]{ arr.clone(), {}, {}, all });
+        recordStep(new int[][]{ arr.clone(), {}, {}, all });
     }
 
     private void heapify(int[] arr, int n, int i) {
@@ -328,25 +365,25 @@ public class SortingVisualizer extends VBox {
 
         if (l < n) {
             comparisons++;
-            steps.add(new int[][]{ arr.clone(), {largest, l}, {}, {} });
+            recordStep(new int[][]{ arr.clone(), {largest, l}, {}, {} });
             if (arr[l] > arr[largest]) largest = l;
         }
         if (r < n) {
             comparisons++;
-            steps.add(new int[][]{ arr.clone(), {largest, r}, {}, {} });
+            recordStep(new int[][]{ arr.clone(), {largest, r}, {}, {} });
             if (arr[r] > arr[largest]) largest = r;
         }
         if (largest != i) {
             swaps++;
             int tmp = arr[i]; arr[i] = arr[largest]; arr[largest] = tmp;
-            steps.add(new int[][]{ arr.clone(), {}, {i, largest}, {} });
+            recordStep(new int[][]{ arr.clone(), {}, {i, largest}, {} });
             heapify(arr, n, largest);
         }
     }
 
     // ─── Cocktail Shaker Sort ─────────────────────────────────────────────────────
     private void generateCocktailSortSteps() {
-        steps.clear(); currentStep = 0; comparisons = 0; swaps = 0;
+        beginGeneration();
         int[] arr = array.clone();
         int n = arr.length;
         boolean swapped = true;
@@ -359,11 +396,11 @@ public class SortingVisualizer extends VBox {
             // Left to right
             for (int i = start; i < end; i++) {
                 comparisons++;
-                steps.add(new int[][]{ arr.clone(), {i, i + 1}, {}, {} });
+                recordStep(new int[][]{ arr.clone(), {i, i + 1}, {}, {} });
                 if (arr[i] > arr[i + 1]) {
                     swaps++;
                     int tmp = arr[i]; arr[i] = arr[i + 1]; arr[i + 1] = tmp;
-                    steps.add(new int[][]{ arr.clone(), {}, {i, i + 1}, {} });
+                    recordStep(new int[][]{ arr.clone(), {}, {i, i + 1}, {} });
                     swapped = true;
                 }
             }
@@ -375,11 +412,11 @@ public class SortingVisualizer extends VBox {
             // Right to left
             for (int i = end - 1; i >= start; i--) {
                 comparisons++;
-                steps.add(new int[][]{ arr.clone(), {i, i + 1}, {}, {} });
+                recordStep(new int[][]{ arr.clone(), {i, i + 1}, {}, {} });
                 if (arr[i] > arr[i + 1]) {
                     swaps++;
                     int tmp = arr[i]; arr[i] = arr[i + 1]; arr[i + 1] = tmp;
-                    steps.add(new int[][]{ arr.clone(), {}, {i, i + 1}, {} });
+                    recordStep(new int[][]{ arr.clone(), {}, {i, i + 1}, {} });
                     swapped = true;
                 }
             }
@@ -388,19 +425,19 @@ public class SortingVisualizer extends VBox {
 
         int[] all = new int[n];
         for (int i = 0; i < n; i++) all[i] = i;
-        steps.add(new int[][]{ arr.clone(), {}, {}, all });
+        recordStep(new int[][]{ arr.clone(), {}, {}, all });
     }
 
     // ─── Counting Sort ────────────────────────────────────────────────────────────
     private void generateCountingSortSteps() {
-        steps.clear(); currentStep = 0; comparisons = 0; swaps = 0;
+        beginGeneration();
         int[] arr = array.clone();
         int n = arr.length;
 
         int max = arr[0];
         for (int i = 1; i < n; i++) {
             comparisons++;
-            steps.add(new int[][]{ arr.clone(), {i, 0}, {}, {} });
+            recordStep(new int[][]{ arr.clone(), {i, 0}, {}, {} });
             if (arr[i] > max) max = arr[i];
         }
 
@@ -422,17 +459,17 @@ public class SortingVisualizer extends VBox {
             swaps++;
             int[] sf = new int[i + 1];
             for (int k = 0; k <= i; k++) sf[k] = k;
-            steps.add(new int[][]{ arr.clone(), {}, {i}, sf });
+            recordStep(new int[][]{ arr.clone(), {}, {i}, sf });
         }
 
         int[] all = new int[n];
         for (int i = 0; i < n; i++) all[i] = i;
-        steps.add(new int[][]{ arr.clone(), {}, {}, all });
+        recordStep(new int[][]{ arr.clone(), {}, {}, all });
     }
 
     // ─── Radix Sort ───────────────────────────────────────────────────────────────
     private void generateRadixSortSteps() {
-        steps.clear(); currentStep = 0; comparisons = 0; swaps = 0;
+        beginGeneration();
         int[] arr = array.clone();
         int n = arr.length;
 
@@ -445,7 +482,7 @@ public class SortingVisualizer extends VBox {
 
         int[] all = new int[n];
         for (int i = 0; i < n; i++) all[i] = i;
-        steps.add(new int[][]{ arr.clone(), {}, {}, all });
+        recordStep(new int[][]{ arr.clone(), {}, {}, all });
     }
 
     private void countingSortByDigit(int[] arr, int n, int exp) {
@@ -463,13 +500,13 @@ public class SortingVisualizer extends VBox {
         for (int i = 0; i < n; i++) {
             arr[i] = output[i];
             swaps++;
-            steps.add(new int[][]{ arr.clone(), {}, {i}, {} });
+            recordStep(new int[][]{ arr.clone(), {}, {i}, {} });
         }
     }
 
     // ─── Gnome Sort ───────────────────────────────────────────────────────────────
     private void generateGnomeSortSteps() {
-        steps.clear(); currentStep = 0; comparisons = 0; swaps = 0;
+        beginGeneration();
         int[] arr = array.clone();
         int n = arr.length;
         int i = 0;
@@ -479,13 +516,13 @@ public class SortingVisualizer extends VBox {
                 i++;
             } else {
                 comparisons++;
-                steps.add(new int[][]{ arr.clone(), {i - 1, i}, {}, {} });
+                recordStep(new int[][]{ arr.clone(), {i - 1, i}, {}, {} });
                 if (arr[i] >= arr[i - 1]) {
                     i++;
                 } else {
                     swaps++;
                     int tmp = arr[i]; arr[i] = arr[i - 1]; arr[i - 1] = tmp;
-                    steps.add(new int[][]{ arr.clone(), {}, {i, i - 1}, {} });
+                    recordStep(new int[][]{ arr.clone(), {}, {i, i - 1}, {} });
                     i--;
                 }
             }
@@ -493,12 +530,12 @@ public class SortingVisualizer extends VBox {
 
         int[] all = new int[n];
         for (int k = 0; k < n; k++) all[k] = k;
-        steps.add(new int[][]{ arr.clone(), {}, {}, all });
+        recordStep(new int[][]{ arr.clone(), {}, {}, all });
     }
 
     // ─── Odd-Even Sort ────────────────────────────────────────────────────────────
     private void generateOddEvenSortSteps() {
-        steps.clear(); currentStep = 0; comparisons = 0; swaps = 0;
+        beginGeneration();
         int[] arr = array.clone();
         int n = arr.length;
         boolean sorted = false;
@@ -509,11 +546,11 @@ public class SortingVisualizer extends VBox {
             // Odd phase
             for (int i = 1; i < n - 1; i += 2) {
                 comparisons++;
-                steps.add(new int[][]{ arr.clone(), {i, i + 1}, {}, {} });
+                recordStep(new int[][]{ arr.clone(), {i, i + 1}, {}, {} });
                 if (arr[i] > arr[i + 1]) {
                     swaps++;
                     int tmp = arr[i]; arr[i] = arr[i + 1]; arr[i + 1] = tmp;
-                    steps.add(new int[][]{ arr.clone(), {}, {i, i + 1}, {} });
+                    recordStep(new int[][]{ arr.clone(), {}, {i, i + 1}, {} });
                     sorted = false;
                 }
             }
@@ -521,11 +558,11 @@ public class SortingVisualizer extends VBox {
             // Even phase
             for (int i = 0; i < n - 1; i += 2) {
                 comparisons++;
-                steps.add(new int[][]{ arr.clone(), {i, i + 1}, {}, {} });
+                recordStep(new int[][]{ arr.clone(), {i, i + 1}, {}, {} });
                 if (arr[i] > arr[i + 1]) {
                     swaps++;
                     int tmp = arr[i]; arr[i] = arr[i + 1]; arr[i + 1] = tmp;
-                    steps.add(new int[][]{ arr.clone(), {}, {i, i + 1}, {} });
+                    recordStep(new int[][]{ arr.clone(), {}, {i, i + 1}, {} });
                     sorted = false;
                 }
             }
@@ -533,10 +570,12 @@ public class SortingVisualizer extends VBox {
 
         int[] all = new int[n];
         for (int i = 0; i < n; i++) all[i] = i;
-        steps.add(new int[][]{ arr.clone(), {}, {}, all });
+        recordStep(new int[][]{ arr.clone(), {}, {}, all });
     }
 
     private void generateSteps(String algorithm) {
+        currentAlgoName = algorithm;
+        if (codePane != null) codePane.load(algorithm);
         switch (algorithm) {
             case "Bubble Sort"         -> generateBubbleSortSteps();
             case "Selection Sort"      -> generateSelectionSortSteps();
@@ -556,15 +595,18 @@ public class SortingVisualizer extends VBox {
     // ─── Drawing ─────────────────────────────────────────────────────────────
 
     private void drawArray() {
-        gc.setFill(Color.web("#0A0E1A"));
-        gc.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
-
         double w = canvas.getWidth();
         double h = canvas.getHeight();
+        if (w < 8 || h < 8 || array == null) return;
+        gc.setFill(Color.web("#0A0E1A"));
+        gc.fillRect(0, 0, w, h);
+
         double barWidth = (w / array.length) - 2;
+        int max = 1;
+        for (int value : array) if (value > max) max = value;
 
         for (int i = 0; i < array.length; i++) {
-            double barHeight = (array[i] / 440.0) * h;
+            double barHeight = (array[i] / (double) max) * (h - 8);
             double x = i * (barWidth + 2);
             double y = h - barHeight;
             gc.setFill(getBarColor(i));
@@ -599,8 +641,8 @@ public class SortingVisualizer extends VBox {
 
     private void stepForward() {
         if (currentStep >= steps.size()) {
+            if (isPlaying) appendLog("✅  Sorting complete!", "#00FF88");
             isPlaying = false;
-            appendLog("✅  Sorting complete!", "#00FF88");
             return;
         }
 
@@ -612,21 +654,37 @@ public class SortingVisualizer extends VBox {
 
         drawArray();
         updateStepLog();
+        if (currentStep < codeLineAtStep.size() && codePane != null) {
+            codePane.highlight(codeLineAtStep.get(currentStep));
+        }
         currentStep++;
     }
 
     private void stepBackward() {
         if (currentStep <= 1) return;
-        currentStep -= 2;
-        stepForward();
+        isPlaying = false;
+        int target = currentStep - 1;
+        currentStep = 0;
+        stepNumber = 0;
+        comparing = new int[]{};
+        swapping = new int[]{};
+        sorted = new int[]{};
+        if (!steps.isEmpty()) array = steps.get(0)[0].clone();
+        stepLogBox.getChildren().clear();
+        if (codePane != null) codePane.highlight(-1);
+        for (int i = 0; i < target; i++) stepForward();
+        isPlaying = false;
     }
 
     // ─── CHANGED: updateStepLog now appends numbered steps ───────────────────
 
     private void updateStepLog() {
         stepNumber++;
-        comparisonsLabel.setText("Comparisons: " + comparisons);
-        swapsLabel.setText("Swaps: " + swaps);
+        if (currentStep < statsAtStep.size()) {
+            int[] stats = statsAtStep.get(currentStep);
+            comparisonsLabel.setText("Comparisons: " + stats[0]);
+            swapsLabel.setText("Moves: " + stats[1]);
+        }
 
         String msg;
         String color;
@@ -740,7 +798,7 @@ public class SortingVisualizer extends VBox {
             -fx-alignment: center-left;
         """);
         // Algorithm selector
-        ComboBox<String> algoSelector = new ComboBox<>();
+        algoSelector = new ComboBox<>();
         algoSelector.getItems().addAll(
                 "Bubble Sort",
                 "Selection Sort",
@@ -792,7 +850,8 @@ public class SortingVisualizer extends VBox {
             clearLog();
             appendLog("◉ Algorithm → " + algoSelector.getValue() + ". Press Play.", "#00E5FF");
             comparisonsLabel.setText("Comparisons: 0");
-            swapsLabel.setText("Swaps: 0");
+            swapsLabel.setText("Moves: 0");
+            if (onAlgorithmSelected != null) onAlgorithmSelected.accept(algoSelector.getValue());
         });
         algoSelector.setCellFactory(lv -> new ListCell<>() {
             @Override
@@ -842,11 +901,12 @@ public class SortingVisualizer extends VBox {
                 comparing = new int[]{};
                 swapping  = new int[]{};
                 sorted    = new int[]{};
-                generateBubbleSortSteps();
+                generateSteps(algoSelector.getValue());
                 drawArray();
+                clearLog();
                 appendLog("◉ Array size → " + size + ". Press Play.", "#00E5FF");
                 comparisonsLabel.setText("Comparisons: 0");
-                swapsLabel.setText("Swaps: 0");
+                swapsLabel.setText("Moves: 0");
             } catch (NumberFormatException ex) {
                 appendLog("⚠ Invalid input — enter a number.", "#FF4444");
             }
@@ -861,7 +921,7 @@ public class SortingVisualizer extends VBox {
         });
 
         comparisonsLabel = createLabel("Comparisons: 0");
-        swapsLabel       = createLabel("Swaps: 0");
+        swapsLabel       = createLabel("Moves: 0");
 
         // ← CHANGED: stepLogLabel → clearLog()
         generateBtn.setOnAction(e -> {
@@ -876,7 +936,7 @@ public class SortingVisualizer extends VBox {
             drawArray();
             clearLog();
             comparisonsLabel.setText("Comparisons: 0");
-            swapsLabel.setText("Swaps: 0");
+            swapsLabel.setText("Moves: 0");
         });
 
         playBtn.setOnAction(e    -> isPlaying = true);
@@ -895,7 +955,8 @@ public class SortingVisualizer extends VBox {
             drawArray();
             clearLog();
             comparisonsLabel.setText("Comparisons: 0");
-            swapsLabel.setText("Swaps: 0");
+            swapsLabel.setText("Moves: 0");
+            if (codePane != null) codePane.highlight(-1);
         });
 
         VBox sizeBox = new VBox(4);

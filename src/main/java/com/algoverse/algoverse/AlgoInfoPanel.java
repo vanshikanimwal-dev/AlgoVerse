@@ -29,7 +29,15 @@ public class AlgoInfoPanel extends VBox {
             Map.entry("Counting Sort",        new String[]{"O(n+k)",  "O(n+k)",   "O(n+k)",   "O(k)"}),
             Map.entry("Radix Sort",           new String[]{"O(nk)",   "O(nk)",    "O(nk)",    "O(n+k)"}),
             Map.entry("Gnome Sort",           new String[]{"O(n)",    "O(n²)",    "O(n²)",    "O(1)"}),
-            Map.entry("Odd-Even Sort",        new String[]{"O(n)",    "O(n²)",    "O(n²)",    "O(1)"})
+            Map.entry("Odd-Even Sort",        new String[]{"O(n)",    "O(n²)",    "O(n²)",    "O(1)"}),
+            Map.entry("Linear Search",        new String[]{"O(1)",    "O(n)",     "O(n)",     "O(1)"}),
+            Map.entry("Binary Search",        new String[]{"O(1)",    "O(log n)", "O(log n)", "O(1)"}),
+            Map.entry("Jump Search",          new String[]{"O(1)",    "O(√n)",    "O(√n)",    "O(1)"}),
+            Map.entry("BFS",                  new String[]{"O(V+E)",  "O(V+E)",   "O(V+E)",   "O(V)"}),
+            Map.entry("DFS",                  new String[]{"O(V+E)",  "O(V+E)",   "O(V+E)",   "O(V)"}),
+            Map.entry("Dijkstra",             new String[]{"O(E log V)","O(E log V)","O(E log V)","O(V)"}),
+            Map.entry("A*",                   new String[]{"O(E)",    "O(E)",     "O(E)",     "O(V)"}),
+            Map.entry("Greedy Best-First",    new String[]{"O(E)",    "O(E)",     "O(E)",     "O(V)"})
     );
 
     // ── Plain English explanations ────────────────────────────────────────────
@@ -57,7 +65,23 @@ public class AlgoInfoPanel extends VBox {
             Map.entry("Gnome Sort",
                     "Similar to insertion sort but moves elements back one step at a time like a garden gnome moving flower pots — simple but slow for large arrays."),
             Map.entry("Odd-Even Sort",
-                    "Alternates between comparing odd-indexed and even-indexed adjacent pairs. Particularly useful for parallel processing environments.")
+                    "Alternates between comparing odd-indexed and even-indexed adjacent pairs. Particularly useful for parallel processing environments."),
+            Map.entry("Linear Search",
+                    "Checks every element from left to right until the target is found or the array ends. Works on unsorted data."),
+            Map.entry("Binary Search",
+                    "Repeatedly splits a sorted array in half, discarding the side that cannot contain the target. Fast, but the data must already be sorted."),
+            Map.entry("Jump Search",
+                    "Jumps ahead by √n steps on a sorted array until it overshoots the target, then scans linearly in that block."),
+            Map.entry("BFS",
+                    "Explores the grid layer by layer from the start. On an unweighted grid it finds a shortest path."),
+            Map.entry("DFS",
+                    "Explores as far as possible along one branch before backtracking. It can find a path, but not necessarily the shortest one."),
+            Map.entry("Dijkstra",
+                    "Always expands the closest unvisited cell by path cost. On this unweighted grid it behaves like a priority-queue BFS and still yields a shortest path."),
+            Map.entry("A*",
+                    "Like Dijkstra, but it also uses a heuristic (Manhattan distance to the goal) so it usually visits fewer cells."),
+            Map.entry("Greedy Best-First",
+                    "Always expands the cell that looks closest to the goal. Fast, but it can ignore cheaper routes and miss the shortest path.")
     );
 
     // ── When to use ───────────────────────────────────────────────────────────
@@ -73,7 +97,15 @@ public class AlgoInfoPanel extends VBox {
             Map.entry("Counting Sort",        "Perfect for sorting integers in a small known range, like exam scores or ages."),
             Map.entry("Radix Sort",           "Excellent for large sets of integers or fixed-length strings where comparison-based sorts are too slow."),
             Map.entry("Gnome Sort",           "Mainly educational. Rarely used in practice due to poor performance."),
-            Map.entry("Odd-Even Sort",        "Designed for parallel processors. Each phase can be computed simultaneously across cores.")
+            Map.entry("Odd-Even Sort",        "Designed for parallel processors. Each phase can be computed simultaneously across cores."),
+            Map.entry("Linear Search",        "Use when the list is small or unsorted, or when you only search once."),
+            Map.entry("Binary Search",        "Use on large sorted arrays. The classic choice for dictionary-style lookup."),
+            Map.entry("Jump Search",          "A middle ground on sorted arrays when binary search is awkward to implement, such as in some linked structures."),
+            Map.entry("BFS",                  "Best default for unweighted maps, mazes, and 'fewest steps' problems."),
+            Map.entry("DFS",                  "Useful for exploring all paths, topological-style traversal, or maze generation — not shortest paths."),
+            Map.entry("Dijkstra",             "Use when edges have different weights and you need a guaranteed shortest path."),
+            Map.entry("A*",                   "The usual choice for games and maps when you have a good heuristic to the target."),
+            Map.entry("Greedy Best-First",    "Good when a fast path matters more than a shortest path.")
     );
 
     public AlgoInfoPanel() {
