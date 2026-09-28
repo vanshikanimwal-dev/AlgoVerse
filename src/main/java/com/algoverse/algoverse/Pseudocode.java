@@ -164,6 +164,21 @@ final class Pseudocode {
                     "  if u is the goal: rebuild path",
                     "  expand unseen neighbors",
                     "return no path"
+            }),
+            Map.entry("Linked List", new String[]{
+                    "node.next ← head",
+                    "head ← node          // insert head",
+                    "walk until index      // insert / delete",
+                    "prev.next ← node.next // delete",
+                    "reverse: next, prev, curr"
+            }),
+            Map.entry("Binary Search Tree", new String[]{
+                    "if value < node: go left",
+                    "if value > node: go right",
+                    "empty spot → insert",
+                    "inorder: left, node, right",
+                    "preorder: node, left, right",
+                    "postorder: left, right, node"
             })
     );
 
@@ -187,7 +202,9 @@ final class Pseudocode {
             Map.entry("DFS", Map.of("visit", 4, "path", 3, "done", 3, "fail", 6, "start", 0)),
             Map.entry("Dijkstra", Map.of("visit", 2, "path", 3, "done", 3, "fail", 6, "start", 0)),
             Map.entry("A*", Map.of("visit", 2, "path", 3, "done", 3, "fail", 6, "start", 0)),
-            Map.entry("Greedy Best-First", Map.of("visit", 4, "path", 3, "done", 3, "fail", 5, "start", 0))
+            Map.entry("Greedy Best-First", Map.of("visit", 4, "path", 3, "done", 3, "fail", 5, "start", 0)),
+            Map.entry("Linked List", Map.of("insert", 1, "walk", 2, "remove", 3, "reverse", 4, "done", 4)),
+            Map.entry("Binary Search Tree", Map.of("left", 0, "right", 1, "insert", 2, "inorder", 3, "preorder", 4, "postorder", 5))
     );
 
     static String[] lines(String algorithm) {

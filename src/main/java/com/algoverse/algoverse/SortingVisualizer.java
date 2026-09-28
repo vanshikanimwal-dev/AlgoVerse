@@ -54,8 +54,24 @@ public class SortingVisualizer extends VBox {
     // Animation
     private AnimationTimer timer;
 
+    record SortPlayback(List<int[][]> frames, List<int[]> stats, List<Integer> lines) {}
+
+    static SortPlayback playback(String algorithm, int[] source) {
+        SortingVisualizer v = new SortingVisualizer(true);
+        v.array = source.clone();
+        v.generateSteps(algorithm);
+        return new SortPlayback(new ArrayList<>(v.steps), new ArrayList<>(v.statsAtStep), new ArrayList<>(v.codeLineAtStep));
+    }
+
     public SortingVisualizer() {
         this(null);
+    }
+
+    private SortingVisualizer(boolean ignored) {
+        this.onAlgorithmSelected = null;
+        canvas = new Canvas();
+        gc = canvas.getGraphicsContext2D();
+        array = new int[0];
     }
 
     public SortingVisualizer(Consumer<String> onAlgorithmSelected) {

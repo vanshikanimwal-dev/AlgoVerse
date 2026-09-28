@@ -51,7 +51,33 @@ button { font-family: inherit; }
 .cta.cyan { color: var(--cyan); border: 1.5px solid var(--cyan); }
 .cta.green { color: var(--green); border: 1.5px solid var(--green); }
 .cta.purple { color: var(--purple); border: 1.5px solid var(--purple); }
-.cta:hover { background: #ffffff12; }
+.cta.gold { color: var(--gold); border: 1.5px solid var(--gold); }
+.cta.red { color: #fb7185; border: 1.5px solid #fb7185; }
+
+.compare-stage {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 0;
+  background: var(--bg);
+}
+.lane {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  min-height: 0;
+  border-right: 1px solid #1e293b;
+}
+.lane:last-child { border-right: 0; }
+.lane-title {
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--cyan);
+  border-bottom: 1px solid #1e293b;
+}
+.lane .code { border-left: 0; max-height: 140px; }
+
+@media (max-width: 800px) {
+  .compare-stage { grid-template-columns: 1fr; }
+}
 
 .viz {
   display: grid;

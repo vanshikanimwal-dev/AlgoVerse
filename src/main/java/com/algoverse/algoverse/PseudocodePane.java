@@ -3,6 +3,7 @@ package com.algoverse.algoverse;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
 class PseudocodePane extends VBox {
@@ -38,6 +39,19 @@ class PseudocodePane extends VBox {
 
         getChildren().addAll(title, scroll);
         load("Bubble Sort");
+    }
+
+    void compact() {
+        setPrefWidth(Region.USE_COMPUTED_SIZE);
+        setMinWidth(0);
+        setMaxWidth(Double.MAX_VALUE);
+        setPrefHeight(150);
+        setMaxHeight(160);
+        setStyle("""
+                -fx-background-color: #060912;
+                -fx-border-color: #1E293B;
+                -fx-border-width: 1 0 0 0;
+                """);
     }
 
     void load(String algorithm) {

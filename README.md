@@ -2,7 +2,7 @@
 
 **[▶ Open in your browser](https://vanshikanimwal-dev.github.io/AlgoVerse/)** — no Java, no install.
 
-Learn algorithms through motion. AlgoVerse animates **sorting**, **searching**, and **pathfinding** so you can see comparisons, swaps, visits, and the shortest path as they happen.
+Learn algorithms through motion. AlgoVerse animates **sorting**, **searching**, **pathfinding**, **side-by-side sort compare**, **linked lists**, and **binary search trees**.
 
 | | |
 | --- | --- |
@@ -17,6 +17,9 @@ Works in Chrome, Edge, Firefox, and Safari.
 - [Sorting visualizer](https://vanshikanimwal-dev.github.io/AlgoVerse/#sort)
 - [Searching visualizer](https://vanshikanimwal-dev.github.io/AlgoVerse/#search)
 - [Pathfinding visualizer](https://vanshikanimwal-dev.github.io/AlgoVerse/#path)
+- [Compare sorts](https://vanshikanimwal-dev.github.io/AlgoVerse/#compare)
+- [Linked list](https://vanshikanimwal-dev.github.io/AlgoVerse/#list)
+- [Binary search tree](https://vanshikanimwal-dev.github.io/AlgoVerse/#bst)
 
 Click a mode, pick an algorithm, press **Play**. Use **[ INFO ]** for complexity and a short explanation. The gold line in the pseudocode follows the current step.
 
@@ -36,6 +39,12 @@ Click a mode, pick an algorithm, press **Play**. Use **[ INFO ]** for complexity
 - Left-drag paints walls; right-drag erases
 - Drag cyan **start** and red **end**
 - **Weights** (1–5): Dijkstra and A\* use cost; BFS treats every step as 1
+
+**Compare sorts:** two algorithms, same array, stepped together so you can see who finishes first
+
+**Linked list:** insert head/tail, delete, reverse, search
+
+**Binary search tree:** insert, search, inorder / preorder / postorder
 
 ## Run the desktop app (optional)
 

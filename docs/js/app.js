@@ -74,10 +74,13 @@
       <section class="home">
         <h1>AlgoVerse</h1>
         <div class="tag">Learn algorithms through motion.</div>
-        <div class="sub">Sorting  ·  Searching  ·  Pathfinding — runs in your browser</div>
+        <div class="sub">Sorting  ·  Searching  ·  Pathfinding  ·  Compare  ·  Data structures</div>
         <button class="cta cyan" data-go="sort">[ Sorting Visualizer ]</button>
         <button class="cta green" data-go="search">[ Searching Visualizer ]</button>
         <button class="cta purple" data-go="path">[ Pathfinding Visualizer ]</button>
+        <button class="cta gold" data-go="compare">[ Compare Sorts ]</button>
+        <button class="cta red" data-go="list">[ Linked List ]</button>
+        <button class="cta cyan" data-go="bst">[ Binary Search Tree ]</button>
       </section>`;
     view.querySelectorAll("[data-go]").forEach((b) => {
       b.onclick = () => { location.hash = b.dataset.go; };
@@ -738,7 +741,377 @@
     stopFn = () => { p.stop(); window.onresize = null; window.onmouseup = null; };
   }
 
-  const routes = { sort: showSort, search: showSearch, path: showPath };
+  function showCompare() {
+    if (stopFn) stopFn();
+    setAlgo("Compare Sorts");
+    view.innerHTML = `
+      <section class="viz">
+        <div class="compare-stage">
+          <div class="lane">
+            <div class="lane-title" id="t1">A</div>
+            <canvas id="c1"></canvas>
+            <div class="code" id="code1"></div>
+          </div>
+          <div class="lane">
+            <div class="lane-title" id="t2">B</div>
+            <canvas id="c2"></canvas>
+            <div class="code" id="code2"></div>
+          </div>
+        </div>
+        <div class="controls">
+          <label>A <select id="a1">${SORTS.map((s) => `<option${s === "Bubble Sort" ? " selected" : ""}>${s}</option>`).join("")}</select></label>
+          <label>B <select id="a2">${SORTS.map((s) => `<option${s === "Quick Sort" ? " selected" : ""}>${s}</option>`).join("")}</select></label>
+          <button id="shuffle">Shuffle</button>
+          <button id="play">Play both</button>
+          <button class="muted" id="pause">Pause</button>
+          <button class="muted" id="fwd">Step both</button>
+          <button class="muted" id="reset">Reset</button>
+          <label>Size <input id="size" value="24" size="3"></label>
+          <label>Speed <input id="speed" type="range" min="1" max="10" value="6"></label>
+          <div class="stats" id="stats"></div>
+        </div>
+        <div class="log" id="log"></div>
+      </section>`;
+    const c1 = document.getElementById("c1");
+    const c2 = document.getElementById("c2");
+    const log = document.getElementById("log");
+    const stats = document.getElementById("stats");
+    let array = randArray(24);
+    let s1 = [], s2 = [], i1 = 0, i2 = 0, playing = false, speed = 6, raf = 0, last = 0;
+    const idle = (arr) => ({ array: arr.slice(), comparing: [], swapping: [], sorted: [], cmp: 0, mov: 0, line: -1 });
+    const paint = () => {
+      if (i1 === 0) drawBars(c1, idle(array)); else drawBars(c1, s1[i1 - 1]);
+      if (i2 === 0) drawBars(c2, idle(array)); else drawBars(c2, s2[i2 - 1]);
+      const a1 = document.getElementById("a1").value, a2 = document.getElementById("a2").value;
+      document.getElementById("t1").textContent = `A  ·  ${a1}  ·  ${i1}/${s1.length} steps`;
+      document.getElementById("t2").textContent = `B  ·  ${a2}  ·  ${i2}/${s2.length} steps`;
+      renderCode(document.getElementById("code1"), a1, i1 ? s1[i1 - 1].line : -1);
+      renderCode(document.getElementById("code2"), a2, i2 ? s2[i2 - 1].line : -1);
+      const cA = i1 ? s1[Math.min(i1, s1.length) - 1].cmp : 0;
+      const cB = i2 ? s2[Math.min(i2, s2.length) - 1].cmp : 0;
+      const done = (i1 >= s1.length ? "A done" : "A running") + " · " + (i2 >= s2.length ? "B done" : "B running");
+      stats.innerHTML = `A cmp ${cA}  ·  B cmp ${cB}<br>${done}`;
+    };
+    const rebuild = () => {
+      const n = Math.min(50, Math.max(8, +document.getElementById("size").value || 24));
+      if (array.length !== n) array = randArray(n);
+      const a1 = document.getElementById("a1").value, a2 = document.getElementById("a2").value;
+      s1 = sortSteps(a1, array); s2 = sortSteps(a2, array); i1 = 0; i2 = 0; playing = false;
+      log.innerHTML = "";
+      appendLog(log, `Same array of ${array.length}. ${a1} vs ${a2}. Press Play both.`, "cyan");
+      paint();
+    };
+    const stepBoth = () => {
+      let moved = false;
+      if (i1 < s1.length) { i1++; moved = true; }
+      if (i2 < s2.length) { i2++; moved = true; }
+      paint();
+      if (i1 >= s1.length && i2 >= s2.length) {
+        playing = false;
+        const winner = s1.length === s2.length ? "Tie in step count." : (s1.length < s2.length ? "A finished in fewer steps." : "B finished in fewer steps.");
+        appendLog(log, `Done. A ${s1.length} steps / ${s1.at(-1).cmp} cmp. B ${s2.length} steps / ${s2.at(-1).cmp} cmp. ${winner}`, "green");
+      }
+      return moved;
+    };
+    const tick = (now) => {
+      raf = requestAnimationFrame(tick);
+      if (!playing) return;
+      if (!last || now - last >= (11 - speed) * 45) { last = now; if (!stepBoth()) playing = false; }
+    };
+    raf = requestAnimationFrame(tick);
+    document.getElementById("a1").onchange = rebuild;
+    document.getElementById("a2").onchange = rebuild;
+    document.getElementById("shuffle").onclick = () => { array = randArray(+document.getElementById("size").value || 24); rebuild(); };
+    document.getElementById("play").onclick = () => { playing = true; };
+    document.getElementById("pause").onclick = () => { playing = false; };
+    document.getElementById("fwd").onclick = () => { playing = false; stepBoth(); };
+    document.getElementById("reset").onclick = rebuild;
+    document.getElementById("speed").oninput = (e) => { speed = +e.target.value; };
+    window.onresize = paint;
+    rebuild();
+    stopFn = () => { cancelAnimationFrame(raf); window.onresize = null; };
+  }
+
+  function drawNodes(canvas, values, hi, kind) {
+    const ctx = canvas.getContext("2d");
+    const w = canvas.width = canvas.clientWidth;
+    const h = canvas.height = canvas.clientHeight;
+    ctx.fillStyle = "#0a0e1a"; ctx.fillRect(0, 0, w, h);
+    const n = values.length;
+    if (!n) {
+      ctx.fillStyle = "#64748b"; ctx.font = "16px monospace";
+      ctx.fillText("empty  ·  head = null", 24, h / 2);
+      return;
+    }
+    const box = Math.min(72, (w - 80) / n - 16);
+    const y = h / 2 - box / 2;
+    ctx.fillStyle = "#00e5ff"; ctx.font = "13px monospace";
+    ctx.fillText("head", 16, y - 12);
+    values.forEach((v, i) => {
+      const x = 24 + i * (box + 36);
+      ctx.fillStyle = hi === i ? (kind === "del" ? "#ff4444" : "#ffd700") : "#00e5ff";
+      if (kind === "new" && hi === i) ctx.fillStyle = "#00ff88";
+      ctx.fillRect(x, y, box, box);
+      ctx.fillStyle = "#0a0e1a"; ctx.font = `bold ${Math.max(12, box / 3)}px monospace`;
+      ctx.fillText(String(v), x + 10, y + box / 2 + 4);
+      ctx.strokeStyle = "#a78bfa"; ctx.beginPath();
+      ctx.moveTo(x + box, y + box / 2); ctx.lineTo(x + box + 28, y + box / 2); ctx.stroke();
+      ctx.fillStyle = "#a78bfa";
+      ctx.beginPath(); ctx.moveTo(x + box + 28, y + box / 2); ctx.lineTo(x + box + 18, y + box / 2 - 5); ctx.lineTo(x + box + 18, y + box / 2 + 5); ctx.fill();
+    });
+    const endX = 24 + n * (box + 36) - 8;
+    ctx.fillStyle = "#64748b"; ctx.font = "13px monospace";
+    ctx.fillText("null", Math.min(endX, w - 50), y + box / 2 + 4);
+  }
+
+  function showList() {
+    if (stopFn) stopFn();
+    setAlgo("Linked List");
+    const ui = shell(`
+      <button id="insHead">Insert head</button>
+      <button id="insTail">Insert tail</button>
+      <button class="muted" id="delHead">Delete head</button>
+      <button class="muted" id="delVal">Delete value</button>
+      <button class="muted" id="rev">Reverse</button>
+      <button id="search">Search</button>
+      <label>Value <input id="val" value="7" size="4"></label>
+      <button id="reset">Reset</button>
+      <label>Speed <input id="speed" type="range" min="1" max="10" value="6"></label>
+    `);
+    let list = [3, 8, 1, 5];
+    let steps = [], playing = false, speed = 6, raf = 0, last = 0, i = 0;
+    const rec = (bucket, arr, hi, kind, event, msg) => {
+      bucket.push({ arr: arr.slice(), hi, kind, line: (CODE_LINE["Linked List"] || {})[event] ?? -1, msg });
+    };
+    const playSteps = (built) => {
+      steps = built; i = 0; playing = true; last = 0; ui.log.innerHTML = "";
+    };
+    const apply = (st) => {
+      drawNodes(ui.canvas, st.arr, st.hi, st.kind);
+      renderCode(ui.code, "Linked List", st.line);
+      ui.stats.innerHTML = `Length: ${st.arr.length}<br>Head: ${st.arr[0] ?? "null"}`;
+      appendLog(ui.log, st.msg, st.kind === "del" ? "red" : st.kind === "new" ? "green" : "gold");
+    };
+    const tick = (now) => {
+      raf = requestAnimationFrame(tick);
+      if (!playing) return;
+      if (!last || now - last >= (11 - speed) * 70) {
+        last = now;
+        if (i < steps.length) { apply(steps[i++]); if (i >= steps.length) { playing = false; list = steps.at(-1).arr.slice(); } }
+        else playing = false;
+      }
+    };
+    raf = requestAnimationFrame(tick);
+    const idle = () => {
+      drawNodes(ui.canvas, list, -1, "");
+      renderCode(ui.code, "Linked List", -1);
+      ui.stats.innerHTML = `Length: ${list.length}<br>Head: ${list[0] ?? "null"}`;
+    };
+    document.getElementById("insHead").onclick = () => {
+      const v = +document.getElementById("val").value || 0;
+      const s = []; rec(s, list, 0, "", "insert", `Insert ${v} at head`);
+      rec(s, [v, ...list], 0, "new", "insert", `head → ${v}`);
+      playSteps(s);
+    };
+    document.getElementById("insTail").onclick = () => {
+      const v = +document.getElementById("val").value || 0;
+      const s = [];
+      for (let k = 0; k < list.length; k++) rec(s, list, k, "", "walk", `Walk to idx ${k}`);
+      rec(s, [...list, v], list.length, "new", "insert", `Tail insert ${v}`);
+      playSteps(s);
+    };
+    document.getElementById("delHead").onclick = () => {
+      if (!list.length) return;
+      const s = []; rec(s, list, 0, "del", "remove", `Delete head ${list[0]}`);
+      rec(s, list.slice(1), 0, "", "done", "head advanced");
+      playSteps(s);
+    };
+    document.getElementById("delVal").onclick = () => {
+      const v = +document.getElementById("val").value;
+      const s = [];
+      for (let k = 0; k < list.length; k++) {
+        rec(s, list, k, list[k] === v ? "del" : "", "walk", `Check ${list[k]}`);
+        if (list[k] === v) {
+          rec(s, list.filter((_, j) => j !== k), Math.max(0, k - 1), "", "remove", `Unlink ${v}`);
+          playSteps(s); return;
+        }
+      }
+      rec(s, list, -1, "", "done", `${v} not in list`);
+      playSteps(s);
+    };
+    document.getElementById("rev").onclick = () => {
+      const s = []; rec(s, list, 0, "", "reverse", "Reverse pointers");
+      rec(s, list.slice().reverse(), 0, "new", "reverse", "head is former tail");
+      playSteps(s);
+    };
+    document.getElementById("search").onclick = () => {
+      const v = +document.getElementById("val").value;
+      const s = [];
+      for (let k = 0; k < list.length; k++) {
+        rec(s, list, k, "", "walk", `Compare ${list[k]} to ${v}`);
+        if (list[k] === v) { rec(s, list, k, "new", "done", `Found at index ${k}`); playSteps(s); return; }
+      }
+      rec(s, list, -1, "", "done", "Not found"); playSteps(s);
+    };
+    document.getElementById("reset").onclick = () => { list = [3, 8, 1, 5]; playing = false; ui.log.innerHTML = ""; idle(); appendLog(ui.log, "List reset.", "purple"); };
+    document.getElementById("speed").oninput = (e) => { speed = +e.target.value; };
+    window.onresize = idle;
+    idle();
+    appendLog(ui.log, "Insert, delete, reverse, or search. Each action animates the pointers.", "cyan");
+    stopFn = () => { cancelAnimationFrame(raf); window.onresize = null; };
+  }
+
+  function layoutTree(root) {
+    const pos = new Map();
+    let i = 0;
+    const walk = (n, d) => {
+      if (!n) return;
+      walk(n.l, d + 1);
+      pos.set(n, { x: i++, y: d, v: n.v });
+      walk(n.r, d + 1);
+    };
+    walk(root, 0);
+    return pos;
+  }
+
+  function bstInsert(root, v, frames) {
+    if (!root) {
+      const n = { v, l: null, r: null };
+      frames.push({ root: cloneTree(n), hi: v, event: "insert", msg: `Insert ${v} as root` });
+      return n;
+    }
+    let cur = root;
+    while (true) {
+      frames.push({ root: cloneTree(root), hi: cur.v, event: v < cur.v ? "left" : "right", msg: `${v} vs ${cur.v} → ${v < cur.v ? "left" : "right"}` });
+      if (v === cur.v) { frames.push({ root: cloneTree(root), hi: v, event: "insert", msg: `${v} already present` }); return root; }
+      if (v < cur.v) {
+        if (!cur.l) { cur.l = { v, l: null, r: null }; frames.push({ root: cloneTree(root), hi: v, event: "insert", msg: `Insert ${v} left of ${cur.v}` }); return root; }
+        cur = cur.l;
+      } else {
+        if (!cur.r) { cur.r = { v, l: null, r: null }; frames.push({ root: cloneTree(root), hi: v, event: "insert", msg: `Insert ${v} right of ${cur.v}` }); return root; }
+        cur = cur.r;
+      }
+    }
+  }
+
+  function cloneTree(n) { return n ? { v: n.v, l: cloneTree(n.l), r: cloneTree(n.r) } : null; }
+
+  function drawTree(canvas, root, hi) {
+    const ctx = canvas.getContext("2d");
+    const w = canvas.width = canvas.clientWidth;
+    const h = canvas.height = canvas.clientHeight;
+    ctx.fillStyle = "#0a0e1a"; ctx.fillRect(0, 0, w, h);
+    if (!root) { ctx.fillStyle = "#64748b"; ctx.font = "16px monospace"; ctx.fillText("empty tree", 24, h / 2); return; }
+    const pos = layoutTree(root);
+    const nodes = [...pos.values()];
+    const maxX = Math.max(...nodes.map((p) => p.x), 1);
+    const maxY = Math.max(...nodes.map((p) => p.y), 1);
+    const xy = (p) => ({ x: 40 + (p.x / maxX) * (w - 80), y: 36 + (p.y / Math.max(1, maxY)) * (h - 80) });
+    ctx.strokeStyle = "#334155";
+    const edges = (n) => {
+      if (!n) return;
+      const a = xy(pos.get(n));
+      if (n.l) { const b = xy(pos.get(n.l)); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); }
+      if (n.r) { const b = xy(pos.get(n.r)); ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); }
+      edges(n.l); edges(n.r);
+    };
+    edges(root);
+    pos.forEach((p, n) => {
+      const { x, y } = xy(p);
+      ctx.fillStyle = n.v === hi ? "#ffd700" : "#00e5ff";
+      ctx.beginPath(); ctx.arc(x, y, 16, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = "#0a0e1a"; ctx.font = "bold 12px monospace"; ctx.textAlign = "center";
+      ctx.fillText(String(n.v), x, y + 4);
+    });
+    ctx.textAlign = "left";
+  }
+
+  function showBST() {
+    if (stopFn) stopFn();
+    setAlgo("Binary Search Tree");
+    const ui = shell(`
+      <button id="ins">Insert</button>
+      <button id="find">Search</button>
+      <button class="muted" id="inorder">Inorder</button>
+      <button class="muted" id="preorder">Preorder</button>
+      <button class="muted" id="postorder">Postorder</button>
+      <label>Value <input id="val" value="8" size="4"></label>
+      <button id="seed">Random tree</button>
+      <button id="reset">Clear</button>
+      <label>Speed <input id="speed" type="range" min="1" max="10" value="6"></label>
+    `);
+    let root = null;
+    [7, 3, 11, 1, 5, 9, 13].forEach((v) => { root = bstInsert(root, v, []); });
+    let frames = [], i = 0, playing = false, speed = 6, raf = 0, last = 0, hi = null;
+    const play = (f) => { frames = f; i = 0; playing = true; ui.log.innerHTML = ""; };
+    const apply = (st) => {
+      drawTree(ui.canvas, st.root, st.hi);
+      renderCode(ui.code, "Binary Search Tree", (CODE_LINE["Binary Search Tree"] || {})[st.event] ?? -1);
+      hi = st.hi;
+      ui.stats.innerHTML = `Highlight: ${st.hi ?? "—"}`;
+      appendLog(ui.log, st.msg, st.event === "insert" ? "green" : "gold");
+    };
+    const tick = (now) => {
+      raf = requestAnimationFrame(tick);
+      if (!playing) return;
+      if (!last || now - last >= (11 - speed) * 80) {
+        last = now;
+        if (i < frames.length) apply(frames[i++]);
+        else playing = false;
+      }
+    };
+    raf = requestAnimationFrame(tick);
+    const idle = () => { drawTree(ui.canvas, root, hi); renderCode(ui.code, "Binary Search Tree", -1); };
+    document.getElementById("ins").onclick = () => {
+      const v = +document.getElementById("val").value || 0;
+      const f = [];
+      root = bstInsert(root, v, f);
+      play(f);
+    };
+    document.getElementById("find").onclick = () => {
+      const v = +document.getElementById("val").value;
+      const f = [];
+      let cur = root;
+      while (cur) {
+        f.push({ root, hi: cur.v, event: v < cur.v ? "left" : "right", msg: `${v} vs ${cur.v}` });
+        if (cur.v === v) { f.push({ root, hi: v, event: "insert", msg: `Found ${v}` }); break; }
+        cur = v < cur.v ? cur.l : cur.r;
+      }
+      if (!cur) f.push({ root, hi: null, event: "insert", msg: `${v} not in tree` });
+      play(f);
+    };
+    const traverse = (order) => {
+      const f = [];
+      const go = (n) => {
+        if (!n) return;
+        if (order === "preorder") f.push({ root, hi: n.v, event: "preorder", msg: `Visit ${n.v}` });
+        go(n.l);
+        if (order === "inorder") f.push({ root, hi: n.v, event: "inorder", msg: `Visit ${n.v}` });
+        go(n.r);
+        if (order === "postorder") f.push({ root, hi: n.v, event: "postorder", msg: `Visit ${n.v}` });
+      };
+      go(root);
+      f.push({ root, hi: null, event: order, msg: `${order} complete` });
+      play(f);
+    };
+    document.getElementById("inorder").onclick = () => traverse("inorder");
+    document.getElementById("preorder").onclick = () => traverse("preorder");
+    document.getElementById("postorder").onclick = () => traverse("postorder");
+    document.getElementById("seed").onclick = () => {
+      root = null;
+      const vals = Array.from({ length: 7 }, () => 1 + Math.floor(Math.random() * 20));
+      vals.forEach((v) => { root = bstInsert(root, v, []); });
+      hi = null; idle(); ui.log.innerHTML = ""; appendLog(ui.log, "Random tree: " + vals.join(", "), "cyan");
+    };
+    document.getElementById("reset").onclick = () => { root = null; hi = null; idle(); ui.log.innerHTML = ""; };
+    document.getElementById("speed").oninput = (e) => { speed = +e.target.value; };
+    window.onresize = idle;
+    idle();
+    appendLog(ui.log, "Insert and search walk left/right. Traversals highlight visit order.", "cyan");
+    stopFn = () => { cancelAnimationFrame(raf); window.onresize = null; };
+  }
+
+  const routes = { sort: showSort, search: showSearch, path: showPath, compare: showCompare, list: showList, bst: showBST };
   window.addEventListener("hashchange", () => {
     const key = location.hash.replace("#", "");
     (routes[key] || showHome)();

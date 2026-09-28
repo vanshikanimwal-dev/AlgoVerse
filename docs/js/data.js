@@ -18,7 +18,10 @@ const INFO = {
   "DFS": { c: ["O(V+E)", "O(V+E)", "O(V+E)", "O(V)"], e: "Goes as far as possible along one branch before backtracking.", w: "Exploration, not shortest paths." },
   "Dijkstra": { c: ["O(E log V)", "O(E log V)", "O(E log V)", "O(V)"], e: "Always expands the cheapest unvisited cell by path cost.", w: "Weighted graphs when you need a true shortest path." },
   "A*": { c: ["O(E)", "O(E)", "O(E)", "O(V)"], e: "Dijkstra plus a heuristic (Manhattan distance) so it usually visits fewer cells.", w: "Games and maps with a good heuristic." },
-  "Greedy Best-First": { c: ["O(E)", "O(E)", "O(E)", "O(V)"], e: "Always expands the cell that looks closest to the goal. Fast, not always shortest.", w: "When a quick path matters more than the shortest path." }
+  "Greedy Best-First": { c: ["O(E)", "O(E)", "O(E)", "O(V)"], e: "Always expands the cell that looks closest to the goal. Fast, not always shortest.", w: "When a quick path matters more than the shortest path." },
+  "Compare Sorts": { c: ["—", "—", "—", "—"], e: "Runs two sorting algorithms on the same array at the same time so you can compare steps, comparisons, and how soon each finishes.", w: "Use Bubble vs Quick or Insertion vs Merge to see why faster algorithms pull ahead." },
+  "Linked List": { c: ["O(1) head", "O(n) index", "O(n)", "O(n)"], e: "A chain of nodes. Each node stores a value and a pointer to the next. Insert/delete at the head is cheap; finding an index walks the chain.", w: "Use when you insert and delete often at the ends and random access is rare." },
+  "Binary Search Tree": { c: ["O(log n)", "O(log n)", "O(n)", "O(n)"], e: "Each node has a left child (smaller) and a right child (larger). Search and insert follow that rule down the tree.", w: "Fast lookups when the tree stays balanced. Degenerates to a list if you insert sorted data." }
 };
 
 const CODE = {
@@ -41,7 +44,9 @@ const CODE = {
   "DFS": ["stack ← {start}", "while stack is not empty", "  u ← pop", "  if u is the goal: rebuild path", "  for each neighbor v of u", "    if v unseen: push v", "return no path"],
   "Dijkstra": ["dist[start] ← 0, pq ← {start}", "while pq is not empty", "  u ← pop closest by dist", "  if u is the goal: rebuild path", "  for each neighbor v", "    relax dist[v] via cost(u,v)", "return no path"],
   "A*": ["g[start] ← 0, f ← g + h", "while open set is not empty", "  u ← pop lowest f = g + h", "  if u is the goal: rebuild path", "  for each neighbor v", "    relax g[v] and update f", "return no path"],
-  "Greedy Best-First": ["open ← {start}", "while open is not empty", "  u ← pop closest to goal (h only)", "  if u is the goal: rebuild path", "  expand unseen neighbors", "return no path"]
+  "Greedy Best-First": ["open ← {start}", "while open is not empty", "  u ← pop closest to goal (h only)", "  if u is the goal: rebuild path", "  expand unseen neighbors", "return no path"],
+  "Linked List": ["node.next ← head", "head ← node          // insert head", "walk until index      // insert / delete", "prev.next ← node.next // delete", "reverse: next, prev, curr"],
+  "Binary Search Tree": ["if value < node: go left", "if value > node: go right", "empty spot → insert", "inorder: left, node, right", "preorder: node, left, right", "postorder: left, right, node"]
 };
 
 const CODE_LINE = {
@@ -64,5 +69,7 @@ const CODE_LINE = {
   "DFS": { start: 0, visit: 4, path: 3, done: 3, fail: 6 },
   "Dijkstra": { start: 0, visit: 2, path: 3, done: 3, fail: 6 },
   "A*": { start: 0, visit: 2, path: 3, done: 3, fail: 6 },
-  "Greedy Best-First": { start: 0, visit: 4, path: 3, done: 3, fail: 5 }
+  "Greedy Best-First": { start: 0, visit: 4, path: 3, done: 3, fail: 5 },
+  "Linked List": { insert: 1, walk: 2, remove: 3, reverse: 4, done: 4 },
+  "Binary Search Tree": { left: 0, right: 1, insert: 2, inorder: 3, preorder: 4, postorder: 5 }
 };

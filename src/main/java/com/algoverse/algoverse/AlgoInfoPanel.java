@@ -37,7 +37,10 @@ public class AlgoInfoPanel extends VBox {
             Map.entry("DFS",                  new String[]{"O(V+E)",  "O(V+E)",   "O(V+E)",   "O(V)"}),
             Map.entry("Dijkstra",             new String[]{"O(E log V)","O(E log V)","O(E log V)","O(V)"}),
             Map.entry("A*",                   new String[]{"O(E)",    "O(E)",     "O(E)",     "O(V)"}),
-            Map.entry("Greedy Best-First",    new String[]{"O(E)",    "O(E)",     "O(E)",     "O(V)"})
+            Map.entry("Greedy Best-First",    new String[]{"O(E)",    "O(E)",     "O(E)",     "O(V)"}),
+            Map.entry("Compare Sorts",        new String[]{"—",       "—",        "—",        "—"}),
+            Map.entry("Linked List",          new String[]{"O(1) head","O(n) index","O(n)",   "O(n)"}),
+            Map.entry("Binary Search Tree",   new String[]{"O(log n)","O(log n)", "O(n)",     "O(n)"})
     );
 
     // ── Plain English explanations ────────────────────────────────────────────
@@ -81,7 +84,13 @@ public class AlgoInfoPanel extends VBox {
             Map.entry("A*",
                     "Like Dijkstra, but it also uses a heuristic (Manhattan distance to the goal) so it usually visits fewer cells."),
             Map.entry("Greedy Best-First",
-                    "Always expands the cell that looks closest to the goal. Fast, but it can ignore cheaper routes and miss the shortest path.")
+                    "Always expands the cell that looks closest to the goal. Fast, but it can ignore cheaper routes and miss the shortest path."),
+            Map.entry("Compare Sorts",
+                    "Runs two sorting algorithms on the same array at the same time so you can compare steps, comparisons, and how soon each finishes."),
+            Map.entry("Linked List",
+                    "A chain of nodes. Each node stores a value and a pointer to the next. Insert or delete at the head is cheap; finding an index walks the chain."),
+            Map.entry("Binary Search Tree",
+                    "Each node has a left child (smaller) and a right child (larger). Search and insert follow that rule down the tree.")
     );
 
     // ── When to use ───────────────────────────────────────────────────────────
@@ -105,7 +114,10 @@ public class AlgoInfoPanel extends VBox {
             Map.entry("DFS",                  "Useful for exploring all paths, topological-style traversal, or maze generation — not shortest paths."),
             Map.entry("Dijkstra",             "Use when edges have different weights and you need a guaranteed shortest path."),
             Map.entry("A*",                   "The usual choice for games and maps when you have a good heuristic to the target."),
-            Map.entry("Greedy Best-First",    "Good when a fast path matters more than a shortest path.")
+            Map.entry("Greedy Best-First",    "Good when a fast path matters more than a shortest path."),
+            Map.entry("Compare Sorts",        "Use Bubble vs Quick or Insertion vs Merge to see why faster algorithms pull ahead."),
+            Map.entry("Linked List",          "Use when you insert and delete often at the ends and random access is rare."),
+            Map.entry("Binary Search Tree",   "Fast lookups when the tree stays balanced. Degenerates to a list if you insert sorted data.")
     );
 
     public AlgoInfoPanel() {

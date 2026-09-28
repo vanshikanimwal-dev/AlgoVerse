@@ -64,11 +64,35 @@ public class AlgoVerseApp extends Application {
         infoPanel.loadAlgorithm("BFS");
     }
 
+    private void showCompare() {
+        stopCurrentView();
+        CompareVisualizer visualizer = new CompareVisualizer(infoPanel::loadAlgorithm);
+        root.setCenter(visualizer);
+        infoPanel.loadAlgorithm("Compare Sorts");
+    }
+
+    private void showList() {
+        stopCurrentView();
+        LinkedListVisualizer visualizer = new LinkedListVisualizer(infoPanel::loadAlgorithm);
+        root.setCenter(visualizer);
+        infoPanel.loadAlgorithm("Linked List");
+    }
+
+    private void showBst() {
+        stopCurrentView();
+        BstVisualizer visualizer = new BstVisualizer(infoPanel::loadAlgorithm);
+        root.setCenter(visualizer);
+        infoPanel.loadAlgorithm("Binary Search Tree");
+    }
+
     private void stopCurrentView() {
         Node center = root.getCenter();
         if (center instanceof SortingVisualizer v) v.stop();
         if (center instanceof SearchingVisualizer v) v.stop();
         if (center instanceof PathfindingVisualizer v) v.stop();
+        if (center instanceof CompareVisualizer v) v.stop();
+        if (center instanceof LinkedListVisualizer v) v.stop();
+        if (center instanceof BstVisualizer v) v.stop();
     }
 
     private HBox createNavBar() {
@@ -118,19 +142,25 @@ public class AlgoVerseApp extends Application {
         tagline.setFill(Color.web("#F0F4FF"));
         tagline.setFont(Font.font("Monospace", 18));
 
-        Text hint = new Text("Sorting  ·  Searching  ·  Pathfinding");
+        Text hint = new Text("Sorting  ·  Searching  ·  Pathfinding  ·  Compare  ·  Data structures");
         hint.setFill(Color.web("#64748B"));
         hint.setFont(Font.font("Monospace", 14));
 
         Button sortingBtn = createCTAButton("[ Sorting Visualizer ]", "#00E5FF");
         Button searchBtn = createCTAButton("[ Searching Visualizer ]", "#00FF88");
         Button pathBtn = createCTAButton("[ Pathfinding Visualizer ]", "#A78BFA");
+        Button compareBtn = createCTAButton("[ Compare Sorts ]", "#FFD700");
+        Button listBtn = createCTAButton("[ Linked List ]", "#FB7185");
+        Button bstBtn = createCTAButton("[ Binary Search Tree ]", "#00E5FF");
 
         sortingBtn.setOnAction(e -> showSorting());
         searchBtn.setOnAction(e -> showSearching());
         pathBtn.setOnAction(e -> showPathfinding());
+        compareBtn.setOnAction(e -> showCompare());
+        listBtn.setOnAction(e -> showList());
+        bstBtn.setOnAction(e -> showBst());
 
-        home.getChildren().addAll(title, tagline, hint, sortingBtn, searchBtn, pathBtn);
+        home.getChildren().addAll(title, tagline, hint, sortingBtn, searchBtn, pathBtn, compareBtn, listBtn, bstBtn);
         return home;
     }
 
